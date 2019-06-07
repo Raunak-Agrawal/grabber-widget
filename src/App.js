@@ -101,10 +101,24 @@ class App extends Component {
     first_level: [],
     second_level: [],
     third_level: [],
-    options: []
+    fourth_level: [],
+    fifth_level: [],
+    options: [],
+    level: "",
+    submitEnabled: false
   };
   componentDidMount() {
     this.apiCall("first_level");
+  }
+  componentDidUpdate(prevProps, prevState) {
+    console.log(prevState.level, this.state.level);
+    if (prevState.level !== "" && prevState.level !== this.state.level) {
+      console.log("EQUAL");
+    }
+  }
+  static getDerivedStateFromProps(props, state) {
+    console.log(props, state);
+    return true;
   }
   apiCall = (name, id) => {
     if (name === "first_level") {
@@ -112,11 +126,12 @@ class App extends Component {
         .get(
           `https://cloud-fabrica.herokuapp.com/test/api/v1/createDefaultForm/listCustomerExecutiveForm?adminId=5ce17df0c387f00017a0531a&companyName=airtel&type=services`
         )
-        .then(res =>
+        .then(res => {
+          console.log(res);
           this.setState({
             [name]: res.data.result.immediateData
-          })
-        );
+          });
+        });
     } else {
       axios
         .get(
@@ -124,21 +139,68 @@ class App extends Component {
         )
         .then(res =>
           this.setState({
-            [name]: res.data.result.immediateData
+            [name]: res.data.result.immediateData,
+            submitEnabled:
+              res.data.result.immediateData.length === 0 ? true : false
           })
         );
     }
   };
+  onReset = () => {
+    this.setState({
+      second_level: [],
+      third_level: [],
+      fourth_level: [],
+      fifth_level: [],
+      options: []
+    });
+  };
   onChange = (e, level) => {
-    this.apiCall(level, e.value);
     console.log(e, level);
+    this.apiCall(level, e.value);
+    this.setState({
+      options: this.state.options.concat(e.value)
+    });
+    this.setState({ level });
+  };
+  submit = () => {
+    console.log(this.state.level);
+    let requestObject = {
+      id: this.state.options
+    };
+    axios
+      .post(
+        `https://cloud-fabrica.herokuapp.com/test/api/v1/submissions/make?companyName=airtel`,
+        requestObject
+      )
+      .then(res => {
+        console.log(res);
+        alert("form data submitted");
+        this.setState({
+          second_level: [],
+          third_level: [],
+          fourth_level: [],
+          fifth_level: [],
+          options: []
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        alert("ERROR");
+      });
   };
   render() {
-    let { first_level, second_level, third_level } = this.state;
+    let {
+      first_level,
+      second_level,
+      third_level,
+      fourth_level,
+      fifth_level
+    } = this.state;
     console.log(this.state);
     return (
       <div>
-        {first_level.length > 0 ? (
+        {first_level.length >= 0 ? (
           <SelectContainer
             options={first_level}
             onChange={e => this.onChange(e, "second_level")}
@@ -153,7 +215,33 @@ class App extends Component {
         {first_level.length > 0 &&
         second_level.length > 0 &&
         third_level.length > 0 ? (
-          <SelectContainer options={third_level} />
+          <SelectContainer
+            options={third_level}
+            onChange={e => this.onChange(e, "fourth_level")}
+          />
+        ) : null}
+        {first_level.length > 0 &&
+        second_level.length > 0 &&
+        third_level.length > 0 &&
+        fourth_level.length > 0 ? (
+          <SelectContainer
+            options={fourth_level}
+            onChange={e => this.onChange(e, "fifth_level")}
+          />
+        ) : null}
+        {first_level.length > 0 &&
+        second_level.length > 0 &&
+        third_level.length > 0 &&
+        fourth_level.length > 0 &&
+        fifth_level.length > 0 ? (
+          <SelectContainer
+            options={fifth_level}
+            onChange={e => this.onChange(e, "sixth_level")}
+          />
+        ) : null}
+        <button onClick={this.onReset}>Reset</button>
+        {this.state.submitEnabled ? (
+          <button onClick={this.submit}>Submit data</button>
         ) : null}
       </div>
     );

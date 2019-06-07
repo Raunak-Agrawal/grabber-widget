@@ -13,8 +13,8 @@ function SelectContainer({ options, onChange }) {
     // </select>
     <Select
       isDisabled={false}
-      placeholder="Select town..."
-      name="town"
+      placeholder="Select option..."
+      name="option"
       options={options}
       onChange={onChange}
     />
